@@ -8,7 +8,7 @@ with open('README.rst') as f:
 
 setup(
     name='qcos',
-    version='0.0.2',
+    version='0.0.3',
     description='腾讯云对象存储库，支持命令行',
     long_description=readme,
     author='codeif',
@@ -20,6 +20,6 @@ setup(
             'qcos = qcos.cli:main',
         ],
     },
-    install_requires=['requests'],
+    install_requires=['requests', 'termcolor'],
     packages=find_packages(exclude=("tests", "tests.*")),
 )

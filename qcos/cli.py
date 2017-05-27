@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import os.path
+from termcolor import cprint
 
 from .configure import QcloudConfig
 from .client import CosClient
@@ -38,9 +39,15 @@ def main():
         for f in files:
             local_path = os.path.join(root, f)
             cos_path = os.path.join(cos_dir, local_path[slice_start:])
-            r = client.upload(local_path, cos_path)
-            j = r.json()
-            if j.get('code') == 0:
-                print('{} Upload success!'.format(cos_path))
+            if local_path.endswith('.html'):
+                r = client.upload(local_path, cos_path, insertOnly=0)
             else:
-                print('{} Upload failed! {}'.format(cos_path, r.text))
+                r = client.upload(local_path, cos_path)
+            j = r.json()
+            code = j.get('code')
+            if code == 0:
+                cprint('{} Upload success!'.format(cos_path), 'green')
+            elif code == -177:
+                cprint('{} Upload failed, file exit.'.format(cos_path), 'blue')
+            else:
+                cprint('{} Upload failed! {}'.format(cos_path, r.text), 'red')
