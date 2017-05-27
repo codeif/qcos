@@ -4,7 +4,7 @@ qcos
 腾讯云对象存储库，支持命令行
 
 配置
----
+----
 
 使用官方的 `命令行工具CLI <https://www.qcloud.com/product/cli>`_ 配置secret_id, scret_key
 
