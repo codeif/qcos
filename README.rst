@@ -26,9 +26,9 @@ qcos
 
 格式::
 
-    qcos 本地文件夹 appid bucket [远程文件夹(默认为／)]
+    qcos 本地文件夹 appid bucket cos文件夹路径
 
 
 比如::
 
-    qcos ./build 10000 image-bucket
+    qcos ./build 10000 image-bucket /

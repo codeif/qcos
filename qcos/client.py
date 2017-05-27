@@ -20,16 +20,13 @@ class CosClient(object):
 
     def _request(self, method, cos_path,
                  params=None, data=None, headers=None, files=None):
-        proxis = {'http': 'http://127.0.0.1:8888'}
         if not cos_path.startswith('/'):
             cos_path = '/' + cos_path
 
         url = '{}{}'.format(self.url_prefix, cos_path)
         r = self.session.request(method, url,
                                  params=params, data=data,
-                                 proxies=proxis,
                                  headers=headers, files=files)
-        # print(r.text)
         return r
 
     def upload(self, local_path, cos_path,
