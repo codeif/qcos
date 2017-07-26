@@ -8,7 +8,7 @@ with open('README.rst') as f:
 
 setup(
     name='qcos',
-    version='0.0.3',
+    version='0.1.0',
     description='腾讯云对象存储库，支持命令行',
     long_description=readme,
     author='codeif',

@@ -3,7 +3,7 @@ import requests
 from .auth import Auth
 
 
-class CosClient(object):
+class COSClient(object):
 
     def __init__(self, secret_id, secret_key, region, appid, bucket):
         self.secret_id = secret_id
@@ -29,13 +29,24 @@ class CosClient(object):
                                  headers=headers, files=files)
         return r
 
-    def upload(self, local_path, cos_path,
-               sha=None, biz_attr=None, insertOnly=None):
+    def upload_local(self, local_path, cos_path,
+                     sha=None, biz_attr=None, insertOnly=None):
+        filecontent = open(local_path, 'rb')
+        return self.upload_content(
+            filecontent,
+            cos_path,
+            sha,
+            biz_attr,
+            insertOnly
+        )
+
+    def upload_content(self, filecontent, cos_path,
+                       sha=None, biz_attr=None, insertOnly=None):
         """`简单上传文件
         <https://www.qcloud.com/document/api/436/6066>`_
         """
         data = {'op': 'upload'}
-        files = {'filecontent': open(local_path, 'rb')}
+        files = {'filecontent': filecontent}
 
         if sha is not None:
             data['sha'] = sha

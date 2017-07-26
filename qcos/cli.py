@@ -4,10 +4,10 @@ import os.path
 from termcolor import cprint
 
 from .configure import QcloudConfig
-from .client import CosClient
+from .client import COSClient
 
 parser = argparse.ArgumentParser(
-    description='crop and resize an image without aspect ratio distortion.')
+    description='腾讯云COS管理.')
 parser.add_argument('local_dir')
 parser.add_argument('appid')
 parser.add_argument('bucket')
@@ -32,7 +32,7 @@ def main():
 
     # 配置文件配置
     config = QcloudConfig()
-    client = CosClient(config.secret_id, config.secret_key, config.region,
+    client = COSClient(config.secret_id, config.secret_key, config.region,
                        appid, bucket)
 
     for root, dirs, files in os.walk(local_dir):
@@ -40,9 +40,9 @@ def main():
             local_path = os.path.join(root, f)
             cos_path = os.path.join(cos_dir, local_path[slice_start:])
             if local_path.endswith('.html'):
-                r = client.upload(local_path, cos_path, insertOnly=0)
+                r = client.upload_local(local_path, cos_path, insertOnly=0)
             else:
-                r = client.upload(local_path, cos_path)
+                r = client.upload_local(local_path, cos_path)
             j = r.json()
             code = j.get('code')
             if code == 0:

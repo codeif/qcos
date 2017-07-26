@@ -3,6 +3,13 @@ qcos
 
 腾讯云对象存储库，支持命令行
 
+安装
+----
+
+通过pip安装::
+
+    pip install qcos
+
 配置
 ----
 
@@ -14,9 +21,9 @@ qcos
 
 参照源码，比较简单, 调用方式::
 
-    client = CosClient(secret_id, secret_key, region, appid, bucket)
+    client = COSClient(secret_id, secret_key, region, appid, bucket)
     # 简单上传
-    client.upload(local_path, cos_path)
+    client.upload_local(local_path, cos_path)
     # 查询文件属性
     client.stat(cos_path)
 
