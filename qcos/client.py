@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 import requests
 from .auth import Auth
 
@@ -16,10 +17,17 @@ class COSClient(object):
             .format(region, appid, bucket)
 
         self.session = requests.Session()
-        self.session.headers['Authorization'] = self.auth.sign_multi(7200)
+        self._reset_auth()
+
+    def _reset_auth(self):
+        self.auth_expired = int(time.time()) + 21600
+        self.session.headers['Authorization'] = \
+            self.auth.sign_multi(self.auth_expired)
 
     def _request(self, method, cos_path,
                  params=None, data=None, headers=None, files=None):
+        if int(time.time()) > self.auth_expired:
+            self._reset_auth()
         if not cos_path.startswith('/'):
             cos_path = '/' + cos_path
 
@@ -27,6 +35,8 @@ class COSClient(object):
         r = self.session.request(method, url,
                                  params=params, data=data,
                                  headers=headers, files=files)
+        if r.json().get('code') == -96:
+            self._reset_auth()
         return r
 
     def upload_local(self, local_path, cos_path,
