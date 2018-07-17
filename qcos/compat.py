@@ -28,11 +28,9 @@ is_py3 = (_ver[0] == 3)
 
 if is_py2:
     from urllib import quote
-    from ConfigParser import ConfigParser
 
 elif is_py3:
     from urllib.parse import quote
-    from configparser import ConfigParser
 
 
-__all__ = ['quote', 'ConfigParser']
+__all__ = ['quote']

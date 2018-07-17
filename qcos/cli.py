@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import argparse
 import os.path
+
 from termcolor import cprint
 
-from .configure import QcloudConfig
 from .client import COSClient
+from .configure import Configure
 
 parser = argparse.ArgumentParser(
     description='腾讯云COS管理.')
@@ -31,7 +32,7 @@ def main():
     print('appid: ', appid, 'bucket: ', bucket, 'cos_dir: ', cos_dir)
 
     # 配置文件配置
-    config = QcloudConfig()
+    config = Configure()
     client = COSClient(config.secret_id, config.secret_key, config.region,
                        appid, bucket)
 

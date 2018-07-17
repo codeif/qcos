@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
-
+from setuptools import find_packages, setup
 
 with open('README.rst') as f:
     readme = f.read()
@@ -8,7 +7,7 @@ with open('README.rst') as f:
 
 setup(
     name='qcos',
-    version='0.1.1',
+    version='0.1.2',
     description='腾讯云对象存储库，支持命令行',
     long_description=readme,
     author='codeif',
