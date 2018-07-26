@@ -76,6 +76,3 @@ class COSClient(object):
         <https://www.qcloud.com/document/api/436/6069>`_
         """
         return self.request('get', cos_path, params={'op': 'stat'})
-
-    def head(self, cos_path):
-        return self.request('head', cos_path)
