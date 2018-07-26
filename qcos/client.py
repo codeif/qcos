@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
+
 import requests
+
 from .auth import Auth
 
 
@@ -24,8 +26,8 @@ class COSClient(object):
         self.session.headers['Authorization'] = \
             self.auth.sign_multi(self.auth_expired)
 
-    def _request(self, method, cos_path,
-                 params=None, data=None, headers=None, files=None):
+    def request(self, method, cos_path,
+                params=None, data=None, headers=None, files=None):
         if int(time.time()) > self.auth_expired:
             self._reset_auth()
         if not cos_path.startswith('/'):
@@ -67,10 +69,13 @@ class COSClient(object):
         if insertOnly is not None:
             data['insertOnly'] = insertOnly
 
-        return self._request('POST', cos_path, data=data, files=files)
+        return self.request('post', cos_path, data=data, files=files)
 
     def stat(self, cos_path):
         """`查询文件属性
         <https://www.qcloud.com/document/api/436/6069>`_
         """
-        return self._request('GET', cos_path, params={'op': 'stat'})
+        return self.request('get', cos_path, params={'op': 'stat'})
+
+    def head(self, cos_path):
+        return self.request('head', cos_path)
