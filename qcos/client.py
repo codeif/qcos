@@ -1,78 +1,42 @@
-# -*- coding: utf-8 -*-
-import time
+from urllib.parse import urljoin
 
 import requests
 
-from .auth import Auth
+from .auth import CosS3Auth
 
 
-class COSClient(object):
+class Client(object):
 
-    def __init__(self, secret_id, secret_key, region, appid, bucket):
+    def __init__(self, secret_id, secret_key, region, bucket, scheme='https'):
+        assert scheme in ['http', 'https']
+
         self.secret_id = secret_id
         self.secret_key = secret_key
-        self.appid = appid
-        self.bucket = bucket
-        self.auth = Auth(secret_id, secret_key, appid, bucket)
 
-        self.url_prefix = 'http://{}.file.myqcloud.com/files/v2/{}/{}' \
-            .format(region, appid, bucket)
+        self.region = region
+        self.bucket = bucket
+        self.scheme = scheme
 
         self.session = requests.Session()
-        self._reset_auth()
 
-    def _reset_auth(self):
-        self.auth_expired = int(time.time()) + 21600
-        self.session.headers['Authorization'] = \
-            self.auth.sign_multi(self.auth_expired)
+    def get_url(self, key):
+        return urljoin(f'{self.scheme}://{self.bucket}.cos.{self.region}.myqcloud.com', key)
 
-    def request(self, method, cos_path,
-                params=None, data=None, headers=None, files=None):
-        if int(time.time()) > self.auth_expired:
-            self._reset_auth()
-        if not cos_path.startswith('/'):
-            cos_path = '/' + cos_path
-
-        url = '{}{}'.format(self.url_prefix, cos_path)
-        r = self.session.request(method, url,
-                                 params=params, data=data,
-                                 headers=headers, files=files)
-        if r.json().get('code') == -96:
-            self._reset_auth()
-        return r
-
-    def upload_local(self, local_path, cos_path,
-                     sha=None, biz_attr=None, insertOnly=None):
-        filecontent = open(local_path, 'rb')
-        return self.upload_content(
-            filecontent,
-            cos_path,
-            sha,
-            biz_attr,
-            insertOnly
+    def request(self, method, key, **kwargs):
+        url = self.get_url(key)
+        return self.session.request(
+            method,
+            url,
+            auth=CosS3Auth(self.secret_id, self.secret_key, key),
+            **kwargs,
         )
 
-    def upload_content(self, filecontent, cos_path,
-                       sha=None, biz_attr=None, insertOnly=None):
-        """`简单上传文件
-        <https://www.qcloud.com/document/api/436/6066>`_
-        """
-        data = {'op': 'upload'}
-        files = {'filecontent': filecontent}
+    def head_object(self, key):
+        return self.request('HEAD', key)
 
-        if sha is not None:
-            data['sha'] = sha
+    def put_object(self, key, **kwargs):
+        return self.request('PUT', key, **kwargs)
 
-        if biz_attr is not None:
-            data['biz_attr'] = biz_attr
-
-        if insertOnly is not None:
-            data['insertOnly'] = insertOnly
-
-        return self.request('post', cos_path, data=data, files=files)
-
-    def stat(self, cos_path):
-        """`查询文件属性
-        <https://www.qcloud.com/document/api/436/6069>`_
-        """
-        return self.request('get', cos_path, params={'op': 'stat'})
+    def put_local(self, key, local_path, **kwargs):
+        with open(local_path, 'rb') as f:
+            return self.request('PUT', key, data=f, **kwargs)

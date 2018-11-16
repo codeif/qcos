@@ -1,64 +1,94 @@
-# -*- coding: utf-8 -*-
-import random
-import time
-import hmac
 import hashlib
-import base64
+import hmac
+import logging
+import time
+from urllib.parse import quote, urlencode
 
-from .compat import quote
+from requests.auth import AuthBase
+
+logger = logging.getLogger(__name__)
 
 
-class Auth(object):
-    def __init__(self, secret_id, secret_key, appid, bucket):
-        self.secret_id = secret_id
-        self.secret_key = secret_key
-        self.appid = appid
-        self.bucket = bucket
+def to_bytes(v):
+    if isinstance(v, str):
+        return v.encode('utf-8')
+    return v
 
-    def _sign(self, cos_path, expired):
-        """expired为0时是multi签名方式"""
-        rdm = random.randint(0, 999999999)
 
-        if cos_path:
-            fileid = '/{}/{}{}'.format(self.appid,
-                                       self.bucket,
-                                       quote(cos_path, '/'))
+def filter_headers(data):
+    """只设置host content-type 还有x开头的头部.
+
+    :param data(dict): 所有的头部信息.
+    :return(dict): 计算进签名的头部.
+    """
+    headers = {}
+    for i in data:
+        if i == 'Content-Type' or i == 'Host' or i[0] == 'x' or i[0] == 'X':
+            headers[i] = data[i]
+    return headers
+
+
+class CosS3Auth(AuthBase):
+
+    def __init__(self, secret_id, secret_key, key=None, params={}, expire=10000):
+        self._secret_id = secret_id
+        self._secret_key = secret_key
+        self._expire = expire
+        self._params = params
+        if key:
+            if key[0] == u'/':
+                self._path = key
+            else:
+                self._path = u'/' + key
         else:
-            fileid = ''
+            self._path = u'/'
 
-        now = int(time.time())
-        if expired and expired <= 7776000:
-            expired = now + expired
+    def __call__(self, r):
+        path = self._path
+        uri_params = self._params
+        headers = filter_headers(r.headers)
+        uri_params = dict([(k.lower(), v) for k, v in uri_params.items()])
+        # reserved keywords in headers urlencode are -_.~,
+        # notice that / should be encoded and space should not be encoded to plus sign(+)
 
-        sign_items = [
-            ('a', self.appid),
-            ('b', self.bucket),
-            ('k', self.secret_id),
-            ('t', now),
-            ('e', expired),
-            ('r', rdm),
-            ('f', fileid)
-        ]
+        # headers中的key转换为小写，value进行encode
+        headers = dict([(k.lower(), quote(to_bytes(v), '-_.~')) for k, v in headers.items()])
+        uri_params = dict([(k.lower(), v) for k, v in uri_params.items()])
+        format_str = u"{method}\n{host}\n{params}\n{headers}\n".format(
+            method=r.method.lower(),
+            host=path,
+            params=urlencode(sorted(uri_params.items())).replace('+', '%20').replace('%7E', '~'),
+            headers='&'.join(map(lambda tupl: "%s=%s" % (tupl[0], tupl[1]), sorted(headers.items())))
+        )
+        logger.debug("format str: " + format_str)
 
-        plain_text = '&'.join('{}={}'.format(*x) for x in sign_items)
-        plain_bin = plain_text.encode('utf-8')
+        start_sign_time = int(time.time())
+        sign_time = "{bg_time};{ed_time}".format(bg_time=start_sign_time-60, ed_time=start_sign_time+self._expire)
+        sha1 = hashlib.sha1()
+        sha1.update(to_bytes(format_str))
 
-        sha1_hmac = hmac.new(self.secret_key.encode('utf-8'),
-                             plain_bin,
-                             hashlib.sha1)
+        str_to_sign = "sha1\n{time}\n{sha1}\n".format(time=sign_time, sha1=sha1.hexdigest())
+        logger.debug('str_to_sign: ' + str(str_to_sign))
+        sign_key = hmac.new(to_bytes(self._secret_key), to_bytes(sign_time), hashlib.sha1).hexdigest()
+        sign = hmac.new(to_bytes(sign_key), to_bytes(str_to_sign), hashlib.sha1).hexdigest()
+        logger.debug('sign_key: ' + str(sign_key))
+        logger.debug('sign: ' + str(sign))
+        sign_tpl = ("q-sign-algorithm=sha1&q-ak={ak}&q-sign-time={sign_time}&q-key-time={key_time}"
+                    "&q-header-list={headers}&q-url-param-list={params}&q-signature={sign}")
 
-        return base64.b64encode(sha1_hmac.digest() + plain_bin)
+        r.headers['Authorization'] = sign_tpl.format(
+            ak=self._secret_id,
+            sign_time=sign_time,
+            key_time=sign_time,
+            params=';'.join(sorted(map(lambda k: k.lower(), uri_params.keys()))),
+            headers=';'.join(sorted(headers.keys())),
+            sign=sign
+        )
+        logger.debug("sign_key" + str(sign_key))
+        logger.debug(r.headers['Authorization'])
+        logger.debug("request headers: " + str(r.headers))
+        return r
 
-    def sign_once(self, cos_path):
-        """单次签名(针对删除和更新操作)
-        :param cos_path: 要操作的cos路径, 以'/'开始
-        :return: 签名字符串
-        """
-        return self._sign(cos_path, 0)
 
-    def sign_multi(self, expired):
-        """多次签名(针对上传文件，创建目录, 获取文件目录属性, 拉取目录列表)
-        :param expired: 签名过期时间, UNIX时间戳, 或者过期时长
-        :return: 签名字符串
-        """
-        return self._sign('', expired)
+if __name__ == "__main__":
+    pass
