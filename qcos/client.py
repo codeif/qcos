@@ -34,8 +34,8 @@ class Client(object):
     def head_object(self, key):
         return self.request('HEAD', key)
 
-    def put_object(self, key, **kwargs):
-        return self.request('PUT', key, **kwargs)
+    def put_object(self, key, data, **kwargs):
+        return self.request('PUT', key, data=data, **kwargs)
 
     def put_local(self, key, local_path, **kwargs):
         with open(local_path, 'rb') as f:
