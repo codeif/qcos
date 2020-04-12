@@ -35,7 +35,7 @@ class Client(object):
     def get_object(self, key):
         return self.request("GET", key)
 
-    def put_object(self, key, data, **kwargs):
+    def put_object(self, key, data=None, **kwargs):
         return self.request("PUT", key, data=data, **kwargs)
 
     def put_local(self, key, local_path, **kwargs):
