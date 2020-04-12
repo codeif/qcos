@@ -5,7 +5,7 @@ import requests
 from .auth import CosS3Auth
 
 
-class Client(object):
+class Client:
     def __init__(self, secret_id, secret_key, region, bucket, scheme="https"):
         assert scheme in ["http", "https"]
 
@@ -16,8 +16,6 @@ class Client(object):
         self.bucket = bucket
         self.scheme = scheme
 
-        self.session = requests.Session()
-
     def get_object_url(self, key):
         return urljoin(
             f"{self.scheme}://{self.bucket}.cos.{self.region}.myqcloud.com", key
@@ -25,7 +23,7 @@ class Client(object):
 
     def request(self, method, key, **kwargs):
         url = self.get_object_url(key)
-        return self.session.request(
+        return requests.request(
             method, url, auth=CosS3Auth(self.secret_id, self.secret_key, key), **kwargs,
         )
 
