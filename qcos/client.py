@@ -18,13 +18,13 @@ class Client(object):
 
         self.session = requests.Session()
 
-    def get_url(self, key):
+    def get_object_url(self, key):
         return urljoin(
             f"{self.scheme}://{self.bucket}.cos.{self.region}.myqcloud.com", key
         )
 
     def request(self, method, key, **kwargs):
-        url = self.get_url(key)
+        url = self.get_object_url(key)
         return self.session.request(
             method, url, auth=CosS3Auth(self.secret_id, self.secret_key, key), **kwargs,
         )
