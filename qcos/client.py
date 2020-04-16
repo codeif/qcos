@@ -39,3 +39,10 @@ class Client:
     def put_local(self, key, local_path, **kwargs):
         with open(local_path, "rb") as f:
             return self.request("PUT", key, data=f, **kwargs)
+
+    def get_object_or_none(self, key):
+        """如果status_code是404，返回None"""
+        r = self.get_object(key)
+        if r.status_code == 404:
+            return
+        return r
