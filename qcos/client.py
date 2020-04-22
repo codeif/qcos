@@ -1,3 +1,5 @@
+import gzip
+import os.path
 from urllib.parse import urljoin
 
 import requests
@@ -38,7 +40,14 @@ class Client:
 
     def put_local(self, key, local_path, **kwargs):
         with open(local_path, "rb") as f:
-            return self.request("PUT", key, data=f, **kwargs)
+            _, ext = os.path.splitext(local_path)
+            headers = kwargs.pop("headers", {})
+            if ext in {".css", ".js", ".html"}:
+                headers["Content-Encoding"] = "gzip"
+                data = gzip.compress(f.read())
+            else:
+                data = f
+            return self.request("PUT", key, data=data, headers=headers, **kwargs)
 
     def get_object_or_none(self, key):
         """如果status_code是404，返回None"""
