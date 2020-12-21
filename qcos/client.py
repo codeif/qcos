@@ -1,5 +1,6 @@
 import gzip
-import os.path
+import json
+import mimetypes
 from urllib.parse import urljoin
 
 import requests
@@ -29,25 +30,36 @@ class Client:
             method, url, auth=CosS3Auth(self.secret_id, self.secret_key, key), **kwargs,
         )
 
-    def head_object(self, key):
-        return self.request("HEAD", key)
+    def head(self, key, **kwargs):
+        return self.request("HEAD", key, **kwargs)
 
-    def get_object(self, key):
-        return self.request("GET", key)
+    def get(self, key, **kwargs):
+        return self.request("GET", key, **kwargs)
 
-    def put_object(self, key, data=None, **kwargs):
-        return self.request("PUT", key, data=data, **kwargs)
+    def delete(self, key):
+        return self.request("DELETE", key)
+
+    def put_object(self, key, data, content_type=None, headers={}, **kwargs):
+        if content_type is None:
+            content_type = guess_content_type(key)
+        headers["Content-Type"] = content_type
+        return self.request("PUT", key, data=data, headers=headers, **kwargs)
 
     def put_local(self, key, local_path, **kwargs):
         with open(local_path, "rb") as f:
-            _, ext = os.path.splitext(local_path)
-            headers = kwargs.pop("headers", {})
-            if ext in {".css", ".js", ".html"}:
-                headers["Content-Encoding"] = "gzip"
-                data = gzip.compress(f.read())
-            else:
-                data = f
-            return self.request("PUT", key, data=data, headers=headers, **kwargs)
+            return self.smart_put_object(key, data=f.read(), **kwargs)
+
+    def smart_put_object(self, key, data, content_type=None, headers={}, **kwargs):
+        if isinstance(data, (dict, list)):
+            content_type = "application/json"
+            data = json.dumps(data, ensure_ascii=False)
+        if isinstance(data, str):
+            data = data.encode("utf-8")
+        gzip_data = gzip.compress(data)
+        if len(data) > len(gzip_data):
+            headers["Content-Encoding"] = "gzip"
+            data = gzip_data
+        return self.put_object(key, data, content_type, headers=headers, **kwargs)
 
     def get_object_or_none(self, key):
         """如果status_code是404，返回None"""
@@ -55,3 +67,10 @@ class Client:
         if r.status_code == 404:
             return
         return r
+
+
+def guess_content_type(filename):
+    content_type = mimetypes.guess_type(filename)[0]
+    if not content_type:
+        return "application/octet-stream"
+    return content_type
