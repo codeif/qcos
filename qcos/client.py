@@ -63,7 +63,7 @@ class Client:
 
     def get_object_or_none(self, key):
         """如果status_code是404，返回None"""
-        r = self.get_object(key)
+        r = self.get(key)
         if r.status_code == 404:
             return
         return r
