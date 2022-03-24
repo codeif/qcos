@@ -55,10 +55,11 @@ class Client:
             data = json.dumps(data, ensure_ascii=False)
         if isinstance(data, str):
             data = data.encode("utf-8")
-        gzip_data = gzip.compress(data)
-        if len(data) > len(gzip_data):
-            headers["Content-Encoding"] = "gzip"
-            data = gzip_data
+        if len(data) > 256:
+            gzip_data = gzip.compress(data)
+            if len(data) > len(gzip_data):
+                headers["Content-Encoding"] = "gzip"
+                data = gzip_data
         return self.put_object(key, data, content_type, headers=headers, **kwargs)
 
     def get_object_or_none(self, key):
