@@ -55,8 +55,8 @@ class Client:
         data,
         content_type=None,
         headers={},
-        gzip_min_length=1100,
-        gzip_comp_level=5,
+        gzip_min_length=20,
+        gzip_comp_level=9,
         **kwargs,
     ):
         if isinstance(data, (dict, list)):
