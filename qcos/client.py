@@ -49,14 +49,23 @@ class Client:
         with open(local_path, "rb") as f:
             return self.smart_put_object(key, data=f.read(), **kwargs)
 
-    def smart_put_object(self, key, data, content_type=None, headers={}, **kwargs):
+    def smart_put_object(
+        self,
+        key,
+        data,
+        content_type=None,
+        headers={},
+        gzip_min_length=1100,
+        gzip_comp_level=5,
+        **kwargs,
+    ):
         if isinstance(data, (dict, list)):
             content_type = "application/json"
             data = json.dumps(data, ensure_ascii=False)
         if isinstance(data, str):
             data = data.encode("utf-8")
-        if len(data) > 256:
-            gzip_data = gzip.compress(data)
+        if len(data) > gzip_min_length:
+            gzip_data = gzip.compress(data, compresslevel=gzip_comp_level)
             if len(data) > len(gzip_data):
                 headers["Content-Encoding"] = "gzip"
                 data = gzip_data
