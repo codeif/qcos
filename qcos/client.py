@@ -39,9 +39,11 @@ class Client:
     def delete(self, key):
         return self.request("DELETE", key)
 
-    def put_object(self, key, data, content_type=None, headers={}, **kwargs):
+    def put_object(self, key, data, content_type=None, headers=None, **kwargs):
         if content_type is None:
             content_type = guess_content_type(key)
+        if headers is None:
+            headers = {}
         headers["Content-Type"] = content_type
         return self.request("PUT", key, data=data, headers=headers, **kwargs)
 
@@ -54,7 +56,7 @@ class Client:
         key,
         data,
         content_type=None,
-        headers={},
+        headers=None,
         gzip_min_length=20,
         gzip_comp_level=9,
         **kwargs,
@@ -67,6 +69,8 @@ class Client:
         if len(data) > gzip_min_length:
             gzip_data = gzip.compress(data, compresslevel=gzip_comp_level)
             if len(data) > len(gzip_data):
+                if headers is None:
+                    headers = {}
                 headers["Content-Encoding"] = "gzip"
                 data = gzip_data
         return self.put_object(key, data, content_type, headers=headers, **kwargs)
