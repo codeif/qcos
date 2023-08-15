@@ -1,7 +1,7 @@
 import gzip
 import json
 import mimetypes
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 import requests
 
@@ -19,7 +19,11 @@ class Client:
         self.bucket = bucket
         self.scheme = scheme
 
+        self.session = requests.Session()
+
     def get_object_url(self, key):
+        key = quote(key, "/-_.~")
+        key = key.replace("./", ".%2F")
         return urljoin(
             f"{self.scheme}://{self.bucket}.cos.{self.region}.myqcloud.com", key
         )
@@ -27,7 +31,10 @@ class Client:
     def request(self, method, key, **kwargs):
         url = self.get_object_url(key)
         return requests.request(
-            method, url, auth=CosS3Auth(self.secret_id, self.secret_key, key), **kwargs,
+            method,
+            url,
+            auth=CosS3Auth(self.secret_id, self.secret_key, key),
+            **kwargs,
         )
 
     def head(self, key, **kwargs):

@@ -1,37 +1,31 @@
-# Example configuration for Black.
+[tool.poetry]
+name = "qcos"
+version = "2.3.3"
+description = "腾讯云对象存储库，支持命令行"
+authors = ["codeif <me@codeif.com>"]
+license = "MIT"
+readme = "README.rst"
+repository = "https://github.com/codeif/qcos"
 
-# NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
-# character.
+[tool.poetry.scripts]
+qcos = "qcos.cli:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.31.0"
+termcolor = "^2.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.3"
+pytest = "^7.4.0"
+
+[tool.isort]
+profile = "black"
+float_to_top = true
 
 [tool.black]
 line-length = 88
-target-version = ['py36', 'py37', 'py38']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
-  | profiling
-)/
-'''
-
-
-# Build system information below.
-# NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
