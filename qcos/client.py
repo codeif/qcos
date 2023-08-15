@@ -9,7 +9,9 @@ from .auth import CosS3Auth
 
 
 class Client:
-    def __init__(self, secret_id, secret_key, region, bucket, scheme="https"):
+    def __init__(
+        self, secret_id, secret_key, region, bucket, scheme="https", session=None
+    ):
         assert scheme in ["http", "https"]
 
         self.secret_id = secret_id
@@ -19,7 +21,7 @@ class Client:
         self.bucket = bucket
         self.scheme = scheme
 
-        self.session = requests.Session()
+        self.session = session
 
     def get_object_url(self, key):
         key = quote(key, "/-_.~")
@@ -30,7 +32,8 @@ class Client:
 
     def request(self, method, key, **kwargs):
         url = self.get_object_url(key)
-        return requests.request(
+        session = self.session or requests.Session()
+        return session.request(
             method,
             url,
             auth=CosS3Auth(self.secret_id, self.secret_key, key),

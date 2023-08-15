@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "qcos"
-version = "2.3.3"
+version = "2.3.4"
 description = "腾讯云对象存储库，支持命令行"
 authors = ["codeif <me@codeif.com>"]
 license = "MIT"
@@ -12,8 +12,8 @@ qcos = "qcos.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "^2.31.0"
-termcolor = "^2.3.0"
+requests = "*"
+termcolor = "*"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
